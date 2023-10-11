@@ -1,17 +1,19 @@
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl)
+open import Relation.Nullary
 open import Data.Product
 open import Data.Empty
+open import Data.Unit
 
 -- category without universe-poly
 
-Arrow : Set → Set →  Set₁
+Arrow : Set₁ → Set₁ → Set₁
 Arrow A B = A → B → Set
 
-record Category : Set₁ where
+record Category : Set₂ where
   infixr 9 _∘_
   field
     -- Objects
-    Object : Set
+    Object : Set₁
     -- Maps
     _⇒_ : Arrow Object Object
     -- Identity Maps
@@ -25,11 +27,6 @@ record Category : Set₁ where
     -- associative law
     law-assoc : ∀ {A B C D : Object} → (f : A ⇒ B) → (g : B ⇒ C) → (h : C ⇒ D)
                 → h ∘ (g ∘ f) ≡ (h ∘ g) ∘ f
-    -- the associative law is symmetric
-    -- this law is purely for doing proofs in agda
-    law-assoc-sym : ∀ {A B C D : Object} → (f : A ⇒ B) → (g : B ⇒ C) → (h : C ⇒ D)
-                → (h ∘ g) ∘ f ≡ h ∘ (g ∘ f)
-
 
 record isomorphism (c : Category) (A B : Category.Object c) : Set where
   open Category c
@@ -39,7 +36,6 @@ record isomorphism (c : Category) (A B : Category.Object c) : Set where
     id₁ : from ∘ to ≡ id
     id₂ : to ∘ from ≡ id
 
--- TODO: agda question, isomorphism and isInverse are not the same definition right?
 record isInverse (c : Category)
                  (A B : Category.Object c)
                  (f : (Category._⇒_) c A B)
@@ -60,6 +56,7 @@ module Exercise (c : Category) where
 
   -- Exercise 1 (R) (page 41)
   -- ids are isomrophisms
+  open isomorphism
   iso-refl : isomorphism c A A
   iso-refl =
     record {
@@ -82,7 +79,6 @@ module Exercise (c : Category) where
 
   -- Exercise 1 (T) (page 41)
   -- isomrophisms are transitive
-
   iso-trans : isomorphism c A B → isomorphism c B C → isomorphism c A C
   iso-trans record { to = AtoB ; from = BtoA ; id₁ = idA ; id₂ = idB } -- isomorphism from A to B
             record { to = BtoC ; from = CtoB ; id₁ = idB' ; id₂ = idC } -- isomorphism from B to C
@@ -90,7 +86,7 @@ module Exercise (c : Category) where
       = record {
           to = BtoC ∘ AtoB;
           from = BtoA ∘ CtoB;
-          id₁ =  lemma-id₁ AtoB BtoC CtoB BtoA idB' idA;
+          id₁ = lemma-id₁ AtoB BtoC CtoB BtoA idB' idA;
           id₂ =  lemma-id₂ AtoB BtoC CtoB BtoA idC idB
         }
         where
@@ -103,7 +99,7 @@ module Exercise (c : Category) where
               → (BtoA ∘ CtoB) ∘ BtoC ∘ AtoB ≡ id
         lemma-id₁ AtoB BtoC CtoB BtoA idB' idA
                   rewrite law-assoc AtoB BtoC (BtoA ∘ CtoB)
-                  rewrite law-assoc-sym BtoC CtoB BtoA
+                  rewrite sym (law-assoc BtoC CtoB BtoA)
                   rewrite idB'
                   rewrite law-id-r BtoA
                   rewrite idA
@@ -118,7 +114,7 @@ module Exercise (c : Category) where
               → (BtoC ∘ AtoB) ∘ BtoA ∘ CtoB ≡ id
         lemma-id₂ AtoB BtoC CtoB BtoA idC idB
                   rewrite law-assoc CtoB BtoA (BtoC ∘ AtoB)
-                  rewrite law-assoc-sym BtoA AtoB BtoC
+                  rewrite sym (law-assoc BtoA AtoB BtoC)
                   rewrite idB
                   rewrite law-id-r BtoC
                   rewrite idC
@@ -148,7 +144,7 @@ module Exercise (c : Category) where
                      step9 = trans step8 (law-id-r k)
                   in step9
 
-  -- Exercise 3
+  -- Exercise 3 (a)
   -- If f has an inverse, then f satisfies two cancellation laws
   law-cancel-r : (f : B ⇒ C)
                  → (g : C ⇒ B)
@@ -159,7 +155,7 @@ module Exercise (c : Category) where
                  → h ≡ k
   law-cancel-r f g record { idA = idA ; idB = idB } h k fh≡fk =
     let step1 = cong (g ∘_) fh≡fk
-        step2 = law-assoc-sym h f g
+        step2 = sym (law-assoc h f g)
         step3 = trans step2 step1
         step4 = law-assoc k f g
         step5 = trans step3 step4
@@ -171,6 +167,7 @@ module Exercise (c : Category) where
         step11 = trans step10 (law-id-l k)
       in step11
 
+  -- Exercise 3 (b)
   law-cancel-l : (f : A ⇒ B)
                  → (g : B ⇒ A)
                  → isInverse c A B f g
@@ -181,7 +178,7 @@ module Exercise (c : Category) where
   law-cancel-l f g record { idA = idA ; idB = idB } h k hf≡kf =
     let step1 = cong (_∘ g) hf≡kf
         step2 = trans (law-assoc g f h) step1
-        step3 = trans step2 (law-assoc-sym g f k)
+        step3 = trans step2 (sym (law-assoc g f k))
         step4 = sym (cong (h ∘_) idB)
         step5 = cong (k ∘_) idB
         step6 = trans (trans step4 step3) step5
@@ -189,4 +186,70 @@ module Exercise (c : Category) where
         step8 = trans step7 step6
         step9 = trans step8 (law-id-r k)
      in step9
+
+-- Exercise 3 (c)
+-- Note that this proof is not within the Exercise module.
+-- This is because the module is parametrized over a category c,
+--  i.e., for all of our propositions defined inside the module, there's
+--  a category c universally quantified (at the outermost scope).
+--  Therefore we don't have to type out the category c and objects A B in c
+--  in each type.
+-- However, for exercise 3(c), the proposition we are proving is in the form of:
+--  ¬ ∀ (c : Category) (A B : Object c) ...
+-- which is equivalent to:
+--  (∀ (c : Category) (A B : ...) .... ) → ⊥
+-- Note that the universal quantifier ∀ is not at the outermost scope, therefore
+--  it wouldn't work to define this proposition in the module.
+--
+-- Intuitively, we want to say "it is not for all category that ... is true"
+--  or "There exists a category such that ... is NOT true"
+
+hask : Category
+hask =
+  record {
+        Object = Set;
+        _⇒_ = λ A B → (A → B);
+        id = λ x → x;
+        _∘_ = λ g f x → g (f x);
+        law-id-r = λ f → refl;
+        law-id-l = λ f → refl;
+        law-assoc = λ f g h → refl
+  } where open Category
+
+open import Data.Bool
+open import Data.Bool.Properties using (not-involutive)
+open import Function using (const)
+
+wrong-cancel-law : ¬ ((c : Category)
+                → let open Category c in
+                   (A : Object)
+                → (f : A ⇒ A)
+                → (g : A ⇒ A)
+                → isInverse c A A f g
+                → (h : A ⇒ A)
+                → (k : A ⇒ A)
+                → (h ∘ f ≡ f ∘ k)
+                → h ≡ k)
+wrong-cancel-law prop =
+  let c = prop hask Bool not not record { idA = notnot≡id ; idB = notnot≡id } (const true) (const false) refl
+   in lemma2 c
+   where
+    open Category hask
+    lemma : true ≡ false → ⊥
+    lemma ()
+
+    lemma2 : const {B = Bool} true ≡ const {B = Bool} false → ⊥
+    lemma2 eq = lemma (cong-app eq true)
+
+    lemma3 : ∀ (b : Bool) → (not ∘ not) b ≡ (id b)
+    lemma3 false = refl
+    lemma3 true = refl
+
+    open import Axiom.Extensionality.Propositional
+    open import Level
+    postulate
+      funext : {a b : Level} → Extensionality a b
+    notnot≡id : not ∘ not ≡ id
+    notnot≡id = funext lemma3
+
 
