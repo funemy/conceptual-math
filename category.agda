@@ -1,8 +1,6 @@
 open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl)
 open import Relation.Nullary
-open import Data.Product
 open import Data.Empty
-open import Data.Unit
 
 -- category without universe-poly
 
@@ -216,9 +214,6 @@ hask =
         law-assoc = λ f g h → refl
   } where open Category
 
-open import Data.Bool
-open import Data.Bool.Properties using (not-involutive)
-open import Function using (const)
 
 wrong-cancel-law : ¬ ((c : Category)
                 → let open Category c in
@@ -234,7 +229,13 @@ wrong-cancel-law prop =
   let c = prop hask Bool not not record { idA = notnot≡id ; idB = notnot≡id } (const true) (const false) refl
    in lemma2 c
    where
+    open import Level
+    open import Data.Bool
+    open import Function using (const)
+    open import Axiom.Extensionality.Propositional
+
     open Category hask
+
     lemma : true ≡ false → ⊥
     lemma ()
 
@@ -245,10 +246,10 @@ wrong-cancel-law prop =
     lemma3 false = refl
     lemma3 true = refl
 
-    open import Axiom.Extensionality.Propositional
-    open import Level
     postulate
       funext : {a b : Level} → Extensionality a b
+
+    -- this proof requires function extensionality
     notnot≡id : not ∘ not ≡ id
     notnot≡id = funext lemma3
 
