@@ -1,4 +1,4 @@
-open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl; _≢_; subst)
 open import Relation.Nullary
 open import Data.Empty
 
@@ -202,8 +202,8 @@ module Exercise (c : Category) where
 -- Intuitively, we want to say "it is not for all category that ... is true"
 --  or "There exists a category such that ... is NOT true"
 
-hask : Category
-hask =
+SET : Category
+SET =
   record {
         Object = Set;
         _⇒_ = λ A B → (A → B);
@@ -226,7 +226,7 @@ wrong-cancel-law : ¬ ((c : Category)
                 → (h ∘ f ≡ f ∘ k)
                 → h ≡ k)
 wrong-cancel-law prop =
-  let c = prop hask Bool not not record { idA = notnot≡id ; idB = notnot≡id } (const true) (const false) refl
+  let c = prop SET Bool not not record { idA = notnot≡id ; idB = notnot≡id } (const true) (const false) refl
    in lemma2 c
    where
     open import Level
@@ -234,7 +234,7 @@ wrong-cancel-law prop =
     open import Function using (const)
     open import Axiom.Extensionality.Propositional
 
-    open Category hask
+    open Category SET
 
     lemma : true ≡ false → ⊥
     lemma ()
@@ -253,4 +253,31 @@ wrong-cancel-law prop =
     notnot≡id : not ∘ not ≡ id
     notnot≡id = funext lemma3
 
+
+module NotImportant where
+  -- The definition below is not important
+  -- For isomorphism f to compose with h and k, and having h ∘ f ≡ f ∘ k,
+  -- h and k can have different types (h : B → B and k : A → A).
+  -- However, it doesn't make sense to compare h ≡ k then.
+  -- The question is, can we prove exercise 3(c) by showing h ≡ k false,
+  -- due to h and k having different type?
+  --
+  -- The point of the definition below is to show that
+  -- it is possible if we define a new version of equality (i.e., the weird-eq below).
+
+  open import Level using (Level; suc)
+  open import Function using (id)
+
+  data weird-eq {ℓ : Level} {A B : Set ℓ} (a : A) :  B → Set (suc ℓ) where
+    refl : (p : A ≡ B) → weird-eq a (subst id p a)
+
+  test : (A B : Set) → (a : A) → (b : B) → A ≢ B → ¬ (weird-eq a b)
+  test A B a b A≢B (refl A≡B) = A≢B A≡B
+
+  -- more succinctly we can define it as
+  data weird-eq' {ℓ : Level} {A : Set ℓ} (a : A) : {B : Set ℓ} → B → Set (suc ℓ) where
+    refl : weird-eq' a a
+
+  test' : (A B : Set) → (a : A) → (b : B) → A ≢ B → ¬ (weird-eq' a b)
+  test' A B a b A≢B (refl) = A≢B refl
 
