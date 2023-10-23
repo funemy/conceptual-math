@@ -1,4 +1,5 @@
-open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl; _≢_; subst)
+-- TODO: use Setoid
+open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl; _≢_; subst; module ≡-Reasoning) public
 open import Relation.Nullary
 open import Data.Empty
 
@@ -280,4 +281,5 @@ module NotImportant where
 
   test' : (A B : Set) → (a : A) → (b : B) → A ≢ B → ¬ (weird-eq' a b)
   test' A B a b A≢B (refl) = A≢B refl
+
 
