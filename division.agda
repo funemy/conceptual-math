@@ -168,4 +168,83 @@ uniqueness-of-inv f
                   s ∎
                   where open ≡-Reasoning
 
--- TODO: Compare the two definitions relevant to surjectivity
+module Surjectivity where
+  -- In page 52, monomorphism is defined in terms of "being injective for maps from T"
+  -- i.e., forall Object T, given any pair of maps x1, x2 : T ⇒ A, if f ∘ x1 = f ∘ x2, then x1 = x2.
+  -- we way f is a monomorphism or f is injective.
+  --
+  -- However, weirdly, Epimorphism is not defined using surjectivity.
+  -- The definition below (which is the dual of the definition for monomorphism) defines epimorphism.
+  -- But we don't say "f is surjective".
+  Epi : (f : A ⇒ B) → Set₁
+  Epi {A} {B} f = (T : Object) → (t1 t2 : B ⇒ T) → t1 ∘ f ≡ t2 ∘ f → t1 ≡ t2
+
+  -- In fact, on page 51, the book gives an informal definition for what it means to be "surjective"
+  -- Which is similar to the type of proposition1 (except that in prop1 we assume f has a section)
+  surjectiveFromT : (f : A ⇒ B) → (T : Object) → Set
+  surjectiveFromT {A} {B} f T = (y : T ⇒ B) → ∃[ x ] (f ∘ x ≡ y)
+
+  -- Then I guess surjectivity can be defined below
+  surjective : (f : A ⇒ B) → Set₁
+  surjective {A} {B} f = (T : Object) → (y : T ⇒ B) → ∃[ x ] (f ∘ x ≡ y)
+
+  -- Now naturally, we shall ask, are the two definition, namely `Epi` and `surjective` eqivalent?
+  surjective⇒epi : (f : A ⇒ B) → surjective f → Epi f
+  surjective⇒epi f fsurj = epi
+    where
+      epi : Epi f
+      epi T t1 t2 t1f≡t2f = {!!}
+
+  epi⇒surjective : (f : A ⇒ B) → Epi f → surjective f
+  epi⇒surjective f fepi = fsurj
+    where
+      fsurj : surjective f
+      fsurj T y = {!!}, {!!}
+
+  -- It doesn't seem possible to prove either direction.
+  -- Therefore we should consider the definition of epimorphism and surjectivity irrelevant.
+  --
+  -- To see why epimorphism does not imply surjectivity, we can think about the category of monoids (Mon)
+  -- In Mon, the morphisms are homomorphisms (structure preserving maps) between monoids
+  -- Now, we define our f to be a inclusion map ι : ℕ → ℤ defined as {0 -> 0, 1 -> 1 ....},
+  -- which is clearly non-surjective (the negative half of ℤ are not mapped).
+  --
+  -- Then let's prove for two homomorphisms t1 and t2 from ℤ to arbitrary monoid (M, ×, idM),
+  -- if t1 ∘ ι ≡ t2 ∘ ι, then t1 ≡ t2.
+  -- We prove by contradiction, thus we suppose t1 ≠ t2.
+  -- That means there exists some n ∈ ℤ, where t1(n) ≠ t2(n)
+  -- recall a homomorphism h : M → N between two monoids (M, *) (N, ∘) requires:
+  -- h(x * y) = h(x) ∘ h(y) for all x, y ∈ M
+  -- and h(eM) = eN where eM and eN are identity elements for M and N.
+  -- (in our case, the operators for both ℕ and ℤ are both + and the identity elements are 0).
+  -- Since t1 t2 are homomorphisms, that means we have
+  -- t1(n + -n) ≡ t1(0) ≡ idM ≡ t1(n) × t1(-n) and
+  -- t2(n + -n) ≡ t2(0) ≡ idM ≡ t2(n) × t2(-n)
+  -- since t1(n) ≠ t2(n), and the inverse in a group is unique, we got t1(-n) ≠ t2(-n)
+  -- (homomorphism of monoids preserves group structure, so M must also be a group)
+  --
+  -- Now the interesting thing is, one of n and -n must be in ℕ
+  -- but we already assumed t1 ∘ f ≡ t2 ∘ f
+  -- then for f(x) = n or -n (whichever is ℕ), we have (t1 ∘ f) x ≠ (t2 ∘ f) x,
+  -- hense t1 ∘ f ≠ t2 ∘ f, which contradicts our assumption.
+  --
+  -- Therefore, we proved that if t1 ∘ f ≡ t2 ∘ f, then t1 ≡ t2.
+  -- Therefore, f is an epimorphism, but clearly f is not surjective.
+
+
+  -- Now let's have an example in SET
+  -- still consider the function ι above
+  -- We already know it's not surjective.
+  -- For epimorphism: if t1 ∘ ι ≡ t2 ∘ ι, can we prove t1 ≡ t2.
+  -- Well, since now t1 and t2 can be arbitrary functions, this is clearly false
+  -- we can have t1 and t2 defined differently on the negative integers,
+  -- while having the same definition on the positives.
+  -- (in other words, we only need t1 and t2 to be the same on the image of ι).
+
+  -- Intuitively, the difference between Mon aand SET are due to homomorphism requires
+  -- more structure preserving, thus disallow arbitrary functions to qualify as morphisms
+  -- in the category.
+  --
+  -- To sum up, surjectivity and epimorphism coincide in many categories, but they are not always the same.
+  -- Their definitions are also separate and distinct.
+
