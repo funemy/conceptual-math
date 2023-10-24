@@ -59,6 +59,7 @@ Monomorphism {A} {B} f =  (T : Object) → (x1 x2 : T ⇒ A) → f ∘ x1 ≡ f 
 
 -- If morphism is function
 -- then Epimorhism is the same as surjectivity
+-- But note that surjectivity is not defined this way!!
 Epimorphism : (f : A ⇒ B) → Set₁
 Epimorphism {A} {B} f = (T : Object) → (t1 t2 : B ⇒ T) → t1 ∘ f ≡ t2 ∘ f → t1 ≡ t2
 
@@ -159,12 +160,12 @@ uniqueness-of-inv f
                   record { det = r ; isDeterminaton = pfret }
                   record { choice = s ; isChoice = pfsec }
                   = begin
-                  r ≡⟨ sym (law-id-r r) ⟩
-                  r ∘ id ≡⟨ cong (r ∘_) pfsec ⟩
-                  r ∘ f ∘ s ≡⟨ law-assoc s f r ⟩
+                  r           ≡⟨ sym (law-id-r r) ⟩
+                  r ∘ id      ≡⟨ cong (r ∘_) pfsec ⟩
+                  r ∘ f ∘ s   ≡⟨ law-assoc s f r ⟩
                   (r ∘ f) ∘ s ≡⟨ sym (cong (_∘ s) pfret) ⟩
-                  id ∘ s ≡⟨ law-id-l s ⟩
+                  id ∘ s      ≡⟨ law-id-l s ⟩
                   s ∎
                   where open ≡-Reasoning
 
-
+-- TODO: Compare the two definitions relevant to surjectivity
