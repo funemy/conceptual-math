@@ -2,19 +2,20 @@
 open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl; _≢_; subst; module ≡-Reasoning) public
 open import Relation.Nullary
 open import Data.Empty
+open import Agda.Primitive
 
 -- category without universe-poly
 
-Arrow : Set₁ → Set₁ → Set₁
-Arrow A B = A → B → Set
+Arrow : {a b : Level} → Set a → Set b → (ℓ : Level) → Set (a ⊔ b ⊔ lsuc ℓ)
+Arrow A B ℓ = A → B → Set ℓ
 
-record Category : Set₂ where
+record Category (o ℓ : Level) : Set (lsuc o ⊔ lsuc ℓ) where
   infixr 9 _∘_
   field
     -- Objects
-    Object : Set₁
+    Object : Set o
     -- Maps
-    _⇒_ : Arrow Object Object
+    _⇒_ : Arrow Object Object ℓ
     -- Identity Maps
     id : ∀ {A : Object} → A ⇒ A
     -- Composite Maps
@@ -27,7 +28,7 @@ record Category : Set₂ where
     law-assoc : ∀ {A B C D : Object} → (f : A ⇒ B) → (g : B ⇒ C) → (h : C ⇒ D)
                 → h ∘ (g ∘ f) ≡ (h ∘ g) ∘ f
 
-record isomorphism (c : Category) (A B : Category.Object c) : Set where
+record isomorphism {o ℓ : Level} (c : Category o ℓ) (A B : Category.Object c) : Set ℓ where
   open Category c
   field
     to : (A ⇒ B)
@@ -35,17 +36,18 @@ record isomorphism (c : Category) (A B : Category.Object c) : Set where
     id₁ : from ∘ to ≡ id
     id₂ : to ∘ from ≡ id
 
-record isInverse (c : Category)
+record isInverse {o ℓ : Level}
+                 (c : Category o ℓ)
                  (A B : Category.Object c)
                  (f : (Category._⇒_) c A B)
-                 (g : (Category._⇒_) c B A) : Set₁ where
+                 (g : (Category._⇒_) c B A) : Set ℓ where
   open Category c
   field
     idA : g ∘ f ≡ id
     idB : f ∘ g ≡ id
 
 
-module Exercise (c : Category) where
+module Exercise {o ℓ : Level} (c : Category o ℓ) where
   open Category c
 
   variable
@@ -203,7 +205,7 @@ module Exercise (c : Category) where
 -- Intuitively, we want to say "it is not for all category that ... is true"
 --  or "There exists a category such that ... is NOT true"
 
-SET : Category
+SET : Category _ _
 SET =
   record {
         Object = Set;
@@ -216,7 +218,7 @@ SET =
   } where open Category
 
 
-wrong-cancel-law : ¬ ((c : Category)
+wrong-cancel-law : ¬ ((c : Category _ _)
                 → let open Category c in
                    (A : Object)
                 → (f : A ⇒ A)

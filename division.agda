@@ -1,8 +1,9 @@
 open import Category as C using (Category; _≡_)
 open import Data.Product using (∃-syntax; _,_)
+open import Agda.Primitive
 
 -- Page 45 - Page 54
-module Division (c : Category) where
+module Division {o ℓ : Level} (c : Category o ℓ) where
 
 open C
 open Category c
@@ -13,22 +14,22 @@ private
     B : Object
     C : Object
 
-record Determination (f : A ⇒ B) (h : A ⇒ C) : Set where
+record Determination (f : A ⇒ B) (h : A ⇒ C) : Set ℓ where
   field
     det : B ⇒ C
     isDeterminaton : h ≡ det ∘ f
 
-record Choice (g : B ⇒ C) (h : A ⇒ C) : Set where
+record Choice (g : B ⇒ C) (h : A ⇒ C) : Set ℓ where
   field
     choice : A ⇒ B
     isChoice : h ≡ g ∘ choice
 
 -- Retraction is a special Determination problem
-Retraction : (f : A ⇒ B) → Set
+Retraction : (f : A ⇒ B) → Set ℓ
 Retraction f = Determination f id
 
 -- Section is a special Choice problem
-Section : (f : A ⇒ B) → Set
+Section : (f : A ⇒ B) → Set ℓ
 Section f = Choice f id
 
 Proposition1 : (f : A ⇒ B) → Section f → (T : Object) → (y : T ⇒ B) → ∃[ x ] (f ∘ x ≡ y)
@@ -54,13 +55,13 @@ Proposition1* f record { det = r ; isDeterminaton = pf } T g =  g ∘ r , lemma
 
 -- If morphism is function
 -- then Monomorphism is the same as injectivity
-Monomorphism : (f : A ⇒ B) → Set₁
+Monomorphism : (f : A ⇒ B) → Set (o ⊔ ℓ)
 Monomorphism {A} {B} f =  (T : Object) → (x1 x2 : T ⇒ A) → f ∘ x1 ≡ f ∘ x2 → x1 ≡ x2
 
 -- If morphism is function
 -- then Epimorhism is the same as surjectivity
 -- But note that surjectivity is not defined this way!!
-Epimorphism : (f : A ⇒ B) → Set₁
+Epimorphism : (f : A ⇒ B) → Set (o ⊔ ℓ)
 Epimorphism {A} {B} f = (T : Object) → (t1 t2 : B ⇒ T) → t1 ∘ f ≡ t2 ∘ f → t1 ≡ t2
 
 -- If f has a retraction, then f must be a monomorphism
@@ -136,7 +137,7 @@ Proposition3* f record { choice = s1 ; isChoice = pf1 } g record { choice = s2 ;
       rewrite sym pf2
       = refl
 
-Idempotent : (e : A ⇒ A) → Set
+Idempotent : (e : A ⇒ A) → Set ℓ
 Idempotent e = e ∘ e ≡ e
 
 Exercise9 : (f : A ⇒ B) → (r : B ⇒ A) → let e = r ∘ f in id ≡ e → Idempotent e
@@ -176,16 +177,16 @@ module Surjectivity where
   -- However, weirdly, Epimorphism is not defined using surjectivity.
   -- The definition below (which is the dual of the definition for monomorphism) defines epimorphism.
   -- But we don't say "f is surjective".
-  Epi : (f : A ⇒ B) → Set₁
+  Epi : (f : A ⇒ B) → Set (o ⊔ ℓ)
   Epi {A} {B} f = (T : Object) → (t1 t2 : B ⇒ T) → t1 ∘ f ≡ t2 ∘ f → t1 ≡ t2
 
   -- In fact, on page 51, the book gives an informal definition for what it means to be "surjective"
   -- Which is similar to the type of proposition1 (except that in prop1 we assume f has a section)
-  surjectiveFromT : (f : A ⇒ B) → (T : Object) → Set
+  surjectiveFromT : (f : A ⇒ B) → (T : Object) → Set ℓ
   surjectiveFromT {A} {B} f T = (y : T ⇒ B) → ∃[ x ] (f ∘ x ≡ y)
 
   -- Then I guess surjectivity can be defined below
-  surjective : (f : A ⇒ B) → Set₁
+  surjective : (f : A ⇒ B) → Set (o ⊔ ℓ)
   surjective {A} {B} f = (T : Object) → (y : T ⇒ B) → ∃[ x ] (f ∘ x ≡ y)
 
   -- Now naturally, we shall ask, are the two definition, namely `Epi` and `surjective` eqivalent?
@@ -200,6 +201,10 @@ module Surjectivity where
     where
       fsurj : surjective f
       fsurj T y = {!!}, {!!}
+
+  -- TODO: select T to be B
+  surjective⇒section : (f : A ⇒ B) → surjective f → Section f
+  surjective⇒section f fsuj = {!!}
 
   -- It doesn't seem possible to prove either direction.
   -- Therefore we should consider the definition of epimorphism and surjectivity irrelevant.
