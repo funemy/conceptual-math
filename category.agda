@@ -1,8 +1,12 @@
 -- TODO: use Setoid
-open import Relation.Binary.PropositionalEquality using (_≡_; trans; cong; cong-app; sym; refl; _≢_; subst; module ≡-Reasoning) public
+open import Relation.Binary.PropositionalEquality as PropEq using (_≡_; trans; cong; cong-app; sym; refl; _≢_; subst; module ≡-Reasoning) public
 open import Relation.Nullary
 open import Data.Empty
 open import Agda.Primitive
+open import Data.Unit
+open import Algebra.Bundles renaming (Monoid to M)
+open import Algebra.Core using (Op₂)
+open import Algebra.Structures using (IsMonoid)
 
 -- category without universe-poly
 
@@ -205,6 +209,7 @@ module Exercise {o ℓ : Level} (c : Category o ℓ) where
 -- Intuitively, we want to say "it is not for all category that ... is true"
 --  or "There exists a category such that ... is NOT true"
 
+-- Category SET
 SET : Category _ _
 SET =
   record {
@@ -216,7 +221,6 @@ SET =
         law-id-l = λ f → refl;
         law-assoc = λ f g h → refl
   } where open Category
-
 
 wrong-cancel-law : ¬ ((c : Category _ _)
                 → let open Category c in
@@ -256,32 +260,31 @@ wrong-cancel-law prop =
     notnot≡id : not ∘ not ≡ id
     notnot≡id = funext lemma3
 
+-- Speicializing the Monoid from stdlib to use propositional equality as their equivalance relation
+-- This is purely because my poor encoding of Category
+-- The real fix is to use setoid!!
+record Monoid (c ℓ : Level) : Set (lsuc (c ⊔ ℓ)) where
+  field
+    Carrier : Set c
+    _∙_      : Op₂ Carrier
+    ε        : Carrier
+    isMonoid : IsMonoid _≡_ _∙_ ε
 
-module NotImportant where
-  -- The definition below is not important
-  -- For isomorphism f to compose with h and k, and having h ∘ f ≡ f ∘ k,
-  -- h and k can have different types (h : B → B and k : A → A).
-  -- However, it doesn't make sense to compare h ≡ k then.
-  -- The question is, can we prove exercise 3(c) by showing h ≡ k false,
-  -- due to h and k having different type?
-  --
-  -- The point of the definition below is to show that
-  -- it is possible if we define a new version of equality (i.e., the weird-eq below).
+  private
+    repr = record { Carrier = Carrier ; _≈_ = _≡_ ; _∙_ = _∙_ ; ε = ε ; isMonoid = isMonoid }
 
-  open import Level using (Level; suc)
-  open import Function using (id)
+  open M repr hiding (Carrier; _≈_;  _∙_; ε; isMonoid) public
 
-  data weird-eq {ℓ : Level} {A B : Set ℓ} (a : A) :  B → Set (suc ℓ) where
-    refl : (p : A ≡ B) → weird-eq a (subst id p a)
-
-  test : (A B : Set) → (a : A) → (b : B) → A ≢ B → ¬ (weird-eq a b)
-  test A B a b A≢B (refl A≡B) = A≢B A≡B
-
-  -- more succinctly we can define it as
-  data weird-eq' {ℓ : Level} {A : Set ℓ} (a : A) : {B : Set ℓ} → B → Set (suc ℓ) where
-    refl : weird-eq' a a
-
-  test' : (A B : Set) → (a : A) → (b : B) → A ≢ B → ¬ (weird-eq' a b)
-  test' A B a b A≢B (refl) = A≢B refl
-
+-- A monoid is a category of a single object
+MonoidCat : {c ℓ : Level} → Monoid c ℓ → Category lzero c
+MonoidCat m = record
+           { Object = ⊤
+           ; _⇒_ = λ _ _ → Carrier
+           ; id = λ {A} → ε
+           ; _∘_ = _∙_
+           ; law-id-r = identityʳ
+           ; law-id-l = identityˡ
+           ; law-assoc = λ f g h → PropEq.sym (assoc h g f)
+           }
+           where open Monoid m
 
